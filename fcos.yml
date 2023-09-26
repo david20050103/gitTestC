@@ -12,9 +12,9 @@ passwd:
 storage:
   files:
     - path: /etc/hostname
-      mode: 420
+      mode: 0644
       contents:
-        source: "master-1"
+        inline: master-1
     - path: /etc/NetworkManager/system-connections/eht0.nmconnection
       mode: 0600
       contents:
