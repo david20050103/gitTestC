@@ -1,0 +1,80 @@
+
+variant: fcos
+version: 1.4.0
+# ssh 設定
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDF2i8CY1Z8nTJErervMuyu3Ol0pmIIwM4t46d959K0m9XfYWqex9/sNVjnL6bGyI133ib3Pc1JUnjZpwo0eF5LdTCM+C4XbUyoa2pMCV6bsLWVnUHbSH6EoDCcIwS96mvq62tx/qCyKnu3NPcm8N72zGlhvxjdTYcX8rIJ0ftu/41MCxgsOeH9Zq22MO7IS5nAWbsJZgik2avehKcQCGRdMGecEs98rFvfNUYA47G/UJ2PMd+CfB2EOyyQwDNrgsg1viEtN9wwR1Lvt2wP3TdBbH25YCnF4nxSggVpXIRRhwyOhfAMu5u3u6D8NHjPEJnjNDACK8E3cslLhrKp5gF63ZWFQmic9q7mu4j5Q26zBLHHIxo2f1eWRkhQjanWncj/WOrVZGHkvDdCoRDw6XhpfQqkyAGBYrzwO8hKHn7gzr0Lq5r5R4Q+Q0JJfwrW8lPRWAzC/j3ULQYhvXLy/53WbR7bCLwH+cdZb8iLJsErpXZMneSQ6oEbsrWj36ekMes= cchan@LAPTOP-CUJ2SRN9"
+
+# 網路設定 (要研究)
+storage:
+  files:
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: master-1
+    - path: '/etc/NetworkManager/system-connections/Wired connection 1.nmconnection'
+      mode: 0600
+      contents:
+        inline: |
+          [connection]
+          id=k8s-eth0
+          type=ethernet
+          autoconnect-priority=-999
+          interface-name=eth0
+
+          [ethernet]
+
+          [ipv4]
+          dns=172.29.32.1;8.8.8.8;8.8.4.4;
+          method=auto
+
+          [ipv6]
+          addr-gen-mode=default
+          method=auto
+
+          [proxy]
+    - path: '/etc/NetworkManager/system-connections/Wired connection 2.nmconnection'
+      mode: 0600
+      contents:
+        inline: |
+          [connection]
+          id=k8s-eth1
+          type=ethernet
+          autoconnect-priority=-999
+          interface-name=eth1
+
+          [ethernet]
+
+          [ipv4]
+          address1=172.17.56.11/24,172.17.56.1
+          method=auto
+
+          [ipv6]
+          addr-gen-mode=default
+          method=auto
+
+          [proxy]
+    - path: '/etc/NetworkManager/system-connections/Wired connection 3.nmconnection'
+      mode: 0600
+      contents:
+        inline: |
+          [connection]
+          id=k8s-eth2
+          type=ethernet
+          autoconnect-priority=-999
+          interface-name=eth2
+
+          [ethernet]
+
+          [ipv4]
+          address1=192.168.56.11/24,192.168.56.1
+          method=auto
+
+          [ipv6]
+          addr-gen-mode=default
+          method=auto
+
+          [proxy]
