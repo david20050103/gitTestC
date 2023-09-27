@@ -20,39 +20,34 @@ storage:
       contents:
         inline: |
           [connection]
-          id=eth0
           type=ethernet
+          id="Wired connection 1"
           interface-name=eth0
 
           [ipv4]
-          dns=8.8.8.8;
-          may-fail=false
           method=auto
+          dns=8.8.8.8
     - path: /etc/NetworkManager/system-connections/eht1.nmconnection
       mode: 0600
       contents:
         inline: |
           [connection]
           type=ethernet
-          id=eth1
+          id="Wired connection 2"
           interface-name=eth1
 
           [ipv4]
           method=manual
-          addresses=172.17.56.41/24
-          gateway=172.17.56.1;
-          dns=172.17.56.1;
+          addresses=172.17.56.11/24
     - path: /etc/NetworkManager/system-connections/eht2.nmconnection
       mode: 0600
       contents:
         inline: |
           [connection]
           type=ethernet
-          id=eht2
+          id="Wired connection 3"
           interface-name=eth2
 
           [ipv4]
           method=manual
-          addresses=192.168.56.41/24
-          gateway=192.168.56.1;
-          dns=192.168.56.1;
+          addresses=192.168.56.11/24
