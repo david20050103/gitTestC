@@ -15,8 +15,9 @@ storage:
       mode: 0644
       contents:
         inline: master-2
+    # Set operator hostname
     - path: /etc/hosts
-      mode: 0644
+      overwrite: true
       contents:
         inline: |
           172.17.56.11 master-1
