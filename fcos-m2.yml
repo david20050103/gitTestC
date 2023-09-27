@@ -15,6 +15,16 @@ storage:
       mode: 0644
       contents:
         inline: master-2
+    - path: /etc/hosts
+      mode: 0644
+      contents:
+        inline: |
+          172.17.56.11 master-1
+          172.17.56.12 master-2
+          172.17.56.21 worker-1
+          172.17.56.22 worker-2
+          172.17.56.23 worker-3
+          172.17.56.30 loadbalancer
     - path: '/etc/NetworkManager/system-connections/Wired connection 1.nmconnection'
       mode: 0600
       contents:
