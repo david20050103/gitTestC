@@ -1,0 +1,166 @@
+# 多安裝 vim 工具，並為預設編輯器 https://docs.fedoraproject.org/en-US/fedora-coreos/os-extensions/
+variant: fcos
+version: 1.4.0
+systemd:
+  units:
+    # Installing vim as a layered package with rpm-ostree
+    - name: rpm-ostree-install-vim.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Layer vim with rpm-ostree
+        Wants=network-online.target
+        After=network-online.target
+        # We run before `zincati.service` to avoid conflicting rpm-ostree
+        # transactions.
+        Before=zincati.service
+        ConditionPathExists=!/var/lib/%N.stamp
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        # `--allow-inactive` ensures that rpm-ostree does not return an error
+        # if the package is already installed. This is useful if the package is
+        # added to the root image in a future Fedora CoreOS release as it will
+        # prevent the service from failing.
+        ExecStart=/usr/bin/rpm-ostree install --apply-live --allow-inactive vim
+        ExecStart=/bin/touch /var/lib/%N.stamp
+
+        [Install]
+        WantedBy=multi-user.target
+passwd:
+  users:
+    - name: k8s
+      groups:
+        - docker
+        - wheel
+        - sudo
+      ssh_authorized_keys:
+        - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDF2i8CY1Z8nTJErervMuyu3Ol0pmIIwM4t46d959K0m9XfYWqex9/sNVjnL6bGyI133ib3Pc1JUnjZpwo0eF5LdTCM+C4XbUyoa2pMCV6bsLWVnUHbSH6EoDCcIwS96mvq62tx/qCyKnu3NPcm8N72zGlhvxjdTYcX8rIJ0ftu/41MCxgsOeH9Zq22MO7IS5nAWbsJZgik2avehKcQCGRdMGecEs98rFvfNUYA47G/UJ2PMd+CfB2EOyyQwDNrgsg1viEtN9wwR1Lvt2wP3TdBbH25YCnF4nxSggVpXIRRhwyOhfAMu5u3u6D8NHjPEJnjNDACK8E3cslLhrKp5gF63ZWFQmic9q7mu4j5Q26zBLHHIxo2f1eWRkhQjanWncj/WOrVZGHkvDdCoRDw6XhpfQqkyAGBYrzwO8hKHn7gzr0Lq5r5R4Q+Q0JJfwrW8lPRWAzC/j3ULQYhvXLy/53WbR7bCLwH+cdZb8iLJsErpXZMneSQ6oEbsrWj36ekMes= cchan@LAPTOP-CUJ2SRN9"
+    - name: core
+      groups:
+        - docker
+        - wheel
+        - sudo
+      ssh_authorized_keys:
+        - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDF2i8CY1Z8nTJErervMuyu3Ol0pmIIwM4t46d959K0m9XfYWqex9/sNVjnL6bGyI133ib3Pc1JUnjZpwo0eF5LdTCM+C4XbUyoa2pMCV6bsLWVnUHbSH6EoDCcIwS96mvq62tx/qCyKnu3NPcm8N72zGlhvxjdTYcX8rIJ0ftu/41MCxgsOeH9Zq22MO7IS5nAWbsJZgik2avehKcQCGRdMGecEs98rFvfNUYA47G/UJ2PMd+CfB2EOyyQwDNrgsg1viEtN9wwR1Lvt2wP3TdBbH25YCnF4nxSggVpXIRRhwyOhfAMu5u3u6D8NHjPEJnjNDACK8E3cslLhrKp5gF63ZWFQmic9q7mu4j5Q26zBLHHIxo2f1eWRkhQjanWncj/WOrVZGHkvDdCoRDw6XhpfQqkyAGBYrzwO8hKHn7gzr0Lq5r5R4Q+Q0JJfwrW8lPRWAzC/j3ULQYhvXLy/53WbR7bCLwH+cdZb8iLJsErpXZMneSQ6oEbsrWj36ekMes= cchan@LAPTOP-CUJ2SRN9"
+storage:
+  files:
+    # Set vim as default editor
+    # We use `zz-` as prefix to make sure this is processed last in order to
+    # override any previously set defaults.
+    - path: /etc/profile.d/zz-default-editor.sh
+      overwrite: true
+      contents:
+        inline: |
+          export EDITOR=vim
+    # CRI-O DNF module
+    - path: /etc/dnf/modules.d/cri-o.module
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [cri-o]
+          name=cri-o
+          stream=1.17
+          profiles=
+          state=enabled
+    # YUM repository for kubeadm, kubelet and kubectl
+    - path: /etc/yum.repos.d/kubernetes.repo
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [kubernetes]
+          name=Kubernetes
+          baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+          enabled=1
+          gpgcheck=1
+          repo_gpgcheck=1
+          gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+            https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    # configuring automatic loading of br_netfilter on startup
+    - path: /etc/modules-load.d/br_netfilter.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: br_netfilter
+    # setting kernel parameters required by kubelet
+    - path: /etc/sysctl.d/kubernetes.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          net.bridge.bridge-nf-call-iptables=1
+          net.ipv4.ip_forward=1
+
+
+
+    # 設定 hostname
+    - path: /etc/hostname
+      overwrite: true
+      contents:
+        inline: master-1
+
+    # 設定 cluster 主機中的 nodes(共5台)
+    - path: /etc/hosts
+      overwrite: true
+      contents:
+        inline: |
+          127.0.0.1       localhost
+          ::1             localhost
+
+          # controlplane nodes
+          172.17.56.11   master-1
+          172.17.56.12   master-2
+
+          # worker node
+          # TODO: 與上述網段不同
+          172.17.56.21   worker-1
+          172.17.56.22   worker-2
+          
+          # ha 平衡器
+          # TODO: 與上述網段不同
+          172.17.56.30   loadbalancer
+          
+    # 打開 IPv6
+    # 雷坑: Thx, i fix it with:
+    # 參考網址: https://github.com/cri-o/cri-o/issues/3555
+    - path: /etc/sysctl.d/10-disable-ipv6.conf
+      contents:
+        inline: |
+          # enable IPv6
+          net.ipv6.conf.all.disable_ipv6 = 0
+          net.ipv6.conf.default.disable_ipv6 = 0
+          net.ipv6.conf.eth0.disable_ipv6 = 0
+          net.ipv6.conf.eth1.disable_ipv6 = 0
+
+
+    # 設定 網卡
+    - path: '/etc/NetworkManager/system-connections/eth0.nmconnection'
+      mode: 0600
+      contents:
+        inline: |
+          [connection]
+          id=k8s-eth1
+          type=ethernet
+          interface-name=eth1
+
+          [ipv4]
+          address1=172.17.56.11/24
+          method=manual
+    - path: '/etc/NetworkManager/system-connections/eth1.nmconnection'
+      mode: 0600
+      contents:
+        inline: |
+          [connection]
+          id=k8s-eth0
+          type=ethernet
+          interface-name=eth0
+
+          [ipv4]
+          method=auto
+  links:
+    # 設定時間(台北)
+    - path: /etc/localtime
+      target: ../usr/share/zoneinfo/Asia/Taipei
